@@ -1,0 +1,25 @@
+,,support,confidence,lift
+pot plants,other vegetables,0.016,0.529,1.086
+liquor,whole milk,0.019,0.719,1.12
+mustard,whole milk,0.017,0.72,1.122
+liquor (appetizer),soda,0.01,0.582,1.498
+UHT-milk,other vegetables,0.044,0.531,1.091
+semi-finished bread,other vegetables,0.019,0.522,1.072
+soft cheese,other vegetables,0.02,0.513,1.054
+specialty chocolate,other vegetables,0.031,0.503,1.033
+specialty bar,other vegetables,0.027,0.501,1.029
+chewing gum,whole milk,0.03,0.646,1.006
+cat food,other vegetables,0.026,0.573,1.177
+baking powder,other vegetables,0.016,0.511,1.049
+hard cheese,other vegetables,0.029,0.514,1.056
+spread cheese,other vegetables,0.013,0.507,1.041
+canned fish,rolls/buns,0.015,0.504,1.145
+dishes,whole milk,0.023,0.664,1.034
+red/blush wine,rolls/buns,0.021,0.521,1.183
+condensed milk,other vegetables,0.014,0.557,1.144
+liquor,other vegetables,0.014,0.53,1.088
+condensed milk,whole milk,0.017,0.676,1.053
+zwieback,whole milk,0.011,0.715,1.114
+instant coffee,other vegetables,0.01,0.639,1.312
+pet care,other vegetables,0.011,0.504,1.035
+pet care,rolls/buns,0.011,0.504,1.145

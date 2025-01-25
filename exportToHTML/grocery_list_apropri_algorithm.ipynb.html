@@ -1,0 +1,118 @@
+<html>
+<head>
+<title>grocery_list_apropri_algorithm.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #5f826b; font-style: italic;}
+.s6 { color: #2aacb8;}
+.ls0 { height: 1px; border-width: 0; color: #43454a; background-color:#43454a}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+grocery_list_apropri_algorithm.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+</span><span class="s1"># ***Grocery List Apriori Algorithm*** 
+--- <hr class="ls0"></span><span class="s0">#%% md 
+</span><span class="s1">## Purpose: 
+The purpose of this jupyter notebook is to take a grocery list (provided here by the kind folks at Kaggle: https://www.kaggle.com/datasets/heeraldedhia/groceries-dataset ) and create an Apriori Algorithm from scratch in order to create association rules for grocery items. In layman's terms: 
+1) If a customer goes to the store, how likely are they to buy milk and bread (Support)? 
+2) If they buy milk, how confident are we that they will also buy bread (Confidence)? 
+3) When controlled for the fact that almost everyone buys milk at the store, does milk actually increase the likelihood that someone will buy bread (lift)? 
+ 
+These association rules can be applied to purchasing patterns (market basket analysis), netflix / youtube / spotify / etc watching and listening patterns (content recommendation), fraud detection, healthcare diagnosis, inventory management, and so much more! There are prebuilt Apriori packages for Python, but in order to test and improve my programming, math, and reasoning skills - I'm building this one from scratch. <hr class="ls0"></span><span class="s0">#%% md 
+</span><span class="s1">## The Math Behind Apriori 
+--- <hr class="ls0"></span><span class="s0">#%% md 
+</span><span class="s1">There are three important metrics with the apriori algorithm. I will explain the use case, as well as how to calculate them so that we have a strict understanding of what we need to program. 
+1) Support: How likely a set of items is to appear on a receipt. This is the probability of milk and bread together. It can be calculated by: (#times milk appears on receipts / total receipts) * (#times bread appears on receipts / total receipts). Keep in mind, these lists include purchasing patterns of customers, and customers tend to repeat buy items. **THESE ITEMS SHOULD ONLY BE COUNTED ONCE**. Otherwise, you will end up with more milk and bread than receipts and it will throw off the numbers. 
+2) Confidence: How likely a person is to buy item B if they buy item A. It can be calculated by: support / P item B (#times bread appears on receipts / total receipts). 
+3) Lift: When you control for how likely it is for someone to buy milk, is there still a correlation between someone buying milk and then buying bread, would they be just as likely to buy bread without milk, and does buying milk have a negative correlation - meaning does someone buying milk make them LESS likely to buy bread? This can be calculated by: Confidence / P of item A (#times milk appears on receipts) 
+ 
+When it gets time to choose what items to showcase, I'll explain these numbers in greater detail. <hr class="ls0"></span><span class="s0">#%% md 
+</span><span class="s1"># The Code 
+--- <hr class="ls0"></span><span class="s0">#%% 
+# Importing packages and creating global variables.</span>
+<span class="s2">import </span><span class="s1">itertools</span>
+<span class="s2">from </span><span class="s1">collections </span><span class="s2">import </span><span class="s1">defaultdict</span>
+<span class="s2">import </span><span class="s1">pandas </span><span class="s2">as </span><span class="s1">pd</span>
+<span class="s1">GROCERIES </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">read_csv</span><span class="s3">(</span><span class="s4">&quot;Groceries_dataset.csv&quot;</span><span class="s3">)</span>
+<span class="s1">display</span><span class="s3">(</span><span class="s1">GROCERIES</span><span class="s3">.</span><span class="s1">hea</span>
+<span class="s1">GROCERY_LISTS </span><span class="s3">= </span><span class="s1">defaultdict</span><span class="s3">(</span><span class="s1">int</span><span class="s3">)</span>
+<span class="s1">MEMBER_NUMBERS </span><span class="s3">= []</span>
+<span class="s1">ITEM_COMBOS </span><span class="s3">= []</span>
+<span class="s1">COMBO_COUNTS </span><span class="s3">= </span><span class="s1">defaultdict</span><span class="s3">(</span><span class="s1">int</span><span class="s3">)</span>
+<span class="s1">ITEM_COUNTS </span><span class="s3">= </span><span class="s1">defaultdict</span><span class="s3">(</span><span class="s1">int</span><span class="s3">)</span>
+<span class="s1">ASSOCIATION_RULES </span><span class="s3">= {}</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">create_member_list</span><span class="s3">():</span>
+    <span class="s5">&quot;&quot;&quot;Creates a list of member numbers in order to see what they buy at the store to determine relationships.&quot;&quot;&quot;</span>
+    <span class="s2">for </span><span class="s1">member_num </span><span class="s2">in </span><span class="s1">GROCERIES</span><span class="s3">[</span><span class="s4">'Member_number'</span><span class="s3">]:</span>
+        <span class="s2">if </span><span class="s1">member_num </span><span class="s2">not in </span><span class="s1">MEMBER_NUMBERS</span><span class="s3">:</span>
+            <span class="s1">MEMBER_NUMBERS</span><span class="s3">.</span><span class="s1">append</span><span class="s3">(</span><span class="s1">member_num</span><span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">create_grocery_list</span><span class="s3">():</span>
+    <span class="s5">&quot;&quot;&quot;Uses member numbers to sort the items they bought into lists.&quot;&quot;&quot;</span>
+    <span class="s2">for </span><span class="s1">i </span><span class="s2">in </span><span class="s1">MEMBER_NUMBERS</span><span class="s3">:</span>
+        <span class="s1">GROCERY_LISTS</span><span class="s3">.</span><span class="s1">update</span><span class="s3">({</span><span class="s1">i</span><span class="s3">: </span><span class="s1">GROCERIES</span><span class="s3">[</span><span class="s1">GROCERIES</span><span class="s3">[</span><span class="s4">'Member_number'</span><span class="s3">] == </span><span class="s1">i</span><span class="s3">][</span><span class="s4">'itemDescription'</span><span class="s3">].</span><span class="s1">values</span><span class="s3">})</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">create_combos</span><span class="s3">():</span>
+    <span class="s5">&quot;&quot;&quot;Creates every possible item combo that could be made from member lists. This also counts the number times an item appears in a list. We only count the item once per list, even if the member bought 6 gallons of milk in that time period.&quot;&quot;&quot;</span>
+    <span class="s2">for </span><span class="s1">list </span><span class="s2">in </span><span class="s1">GROCERY_LISTS</span><span class="s3">:</span>
+        <span class="s2">for </span><span class="s1">item </span><span class="s2">in </span><span class="s1">GROCERY_LISTS</span><span class="s3">[</span><span class="s1">list</span><span class="s3">]:</span>
+            <span class="s2">if </span><span class="s1">item </span><span class="s2">in </span><span class="s1">GROCERY_LISTS</span><span class="s3">[</span><span class="s1">list</span><span class="s3">]:</span>
+                <span class="s1">ITEM_COUNTS</span><span class="s3">[</span><span class="s1">item</span><span class="s3">] += </span><span class="s6">1</span>
+        <span class="s1">ITEM_COMBOS</span><span class="s3">.</span><span class="s1">append</span><span class="s3">(</span><span class="s1">set</span><span class="s3">(</span><span class="s1">itertools</span><span class="s3">.</span><span class="s1">combinations</span><span class="s3">(</span><span class="s1">GROCERY_LISTS</span><span class="s3">[</span><span class="s1">list</span><span class="s3">], </span><span class="s6">2</span><span class="s3">)))</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">count_combos</span><span class="s3">():</span>
+    <span class="s5">&quot;&quot;&quot; Counts how often the items are paired together. Makes sure it counts a,b and b,a because combinations doesn't account for flipping the order.&quot;&quot;&quot;</span>
+    <span class="s2">for </span><span class="s1">items </span><span class="s2">in </span><span class="s1">ITEM_COMBOS</span><span class="s3">:</span>
+        <span class="s2">for </span><span class="s1">item </span><span class="s2">in </span><span class="s1">items</span><span class="s3">:</span>
+            <span class="s1">COMBO_COUNTS</span><span class="s3">[(</span><span class="s1">item</span><span class="s3">[</span><span class="s6">0</span><span class="s3">], </span><span class="s1">item</span><span class="s3">[</span><span class="s6">1</span><span class="s3">])] += </span><span class="s6">1</span>
+            <span class="s1">COMBO_COUNTS</span><span class="s3">[(</span><span class="s1">item</span><span class="s3">[</span><span class="s6">1</span><span class="s3">], </span><span class="s1">item</span><span class="s3">[</span><span class="s6">0</span><span class="s3">])] += </span><span class="s6">1</span><hr class="ls0"><span class="s0">#%% md 
+</span><span class="s1">### Important Math Ideas 
+--- 
+Coming back to the 3 values we talked about earlier, here is a bit more information about what they mean: 
+1) Support: 
+- Very Low Support (Under 0.1%): Should only be used when determining rare but critical associations. Most commonly used in healthcare or fraud detection, when the consequences of not noticing the relationship could be dire. 
+- Low to Medium Support (0.1% - 5%): Looking at interesting patterns. Most commonly used in Market Basket Analysis. 
+- High Support &gt; 5%: Captures extremely common associations. 
+- Keep in mind that we have about 3800 members in that list. a 0.1% support would only be us trying to make a decision off 3.8 receipts, which isn't a good idea. This is why I chose a support of 1% and higher. 
+2) Confidence: 
+- Low Confidence (&lt;50%): Too weak of a confidence to be accepted in most contexts. 
+- Medium Confidence (50-70%): Indicates strong associations. Often most used in market basket analysis. 
+- High Confidence (&gt;70%): Strong associations, especially if there is high lift and support. 
+- Very High Confidence (&gt;90%): Be careful! This could be from errors or a rule that is very ridiculous. (This is how I caught that I was double and trip counting items, because the confidence of someone buying milk on one trip to the store followed buying milk on a subsequent visit is extremely high). 
+3) Lift: 
+- Lift = 1: A and B are independent of each other (meaning there isn't an association) 
+- Lift &gt; 1: A and B are positively correlated. This means that A increases the likelihood of B) 
+- Lift &lt;1: A and B are Negatively Correlated. (A decreases the likelihood of B). 
+- All 3 numbers are interesting! For this, the goal was to find if buying A will increase B, so I will use a lift of &gt; 1. <hr class="ls0"></span><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">create_association_rules</span><span class="s3">():</span>
+    <span class="s5">&quot;&quot;&quot;Creates the support, confidence, and lift values for each group of items to determine which ones are most likely to be purchased 
+    together.&quot;&quot;&quot;</span>
+    <span class="s2">for </span><span class="s1">a</span><span class="s3">,</span><span class="s1">b </span><span class="s2">in </span><span class="s1">COMBO_COUNTS</span><span class="s3">:</span>
+        <span class="s1">support </span><span class="s3">= </span><span class="s1">round</span><span class="s3">(</span><span class="s1">COMBO_COUNTS</span><span class="s3">[</span><span class="s1">a</span><span class="s3">,</span><span class="s1">b</span><span class="s3">] / </span><span class="s1">len</span><span class="s3">(</span><span class="s1">GROCERY_LISTS</span><span class="s3">), </span><span class="s6">3</span><span class="s3">)</span>
+        <span class="s1">confidence </span><span class="s3">= </span><span class="s1">round</span><span class="s3">(</span><span class="s1">support </span><span class="s3">/ (</span><span class="s1">ITEM_COUNTS</span><span class="s3">[</span><span class="s1">a</span><span class="s3">] / </span><span class="s1">len</span><span class="s3">(</span><span class="s1">GROCERY_LISTS</span><span class="s3">)), </span><span class="s6">3</span><span class="s3">)</span>
+        <span class="s1">lift </span><span class="s3">= </span><span class="s1">round</span><span class="s3">(</span><span class="s1">confidence </span><span class="s3">/ (</span><span class="s1">ITEM_COUNTS</span><span class="s3">[</span><span class="s1">b</span><span class="s3">] / </span><span class="s1">len</span><span class="s3">(</span><span class="s1">GROCERY_LISTS</span><span class="s3">)), </span><span class="s6">3</span><span class="s3">)</span>
+        <span class="s2">if </span><span class="s1">support </span><span class="s3">&gt;= </span><span class="s6">0.01 </span><span class="s2">and </span><span class="s1">confidence </span><span class="s3">&gt;= </span><span class="s6">0.5 </span><span class="s2">and </span><span class="s1">lift </span><span class="s3">&gt;= </span><span class="s6">1</span><span class="s3">:</span>
+            <span class="s1">ASSOCIATION_RULES</span><span class="s3">[</span><span class="s1">a</span><span class="s3">,</span><span class="s1">b</span><span class="s3">]= {</span><span class="s4">'support'</span><span class="s3">:</span><span class="s1">support</span><span class="s3">, </span><span class="s4">'confidence'</span><span class="s3">:</span><span class="s1">confidence</span><span class="s3">, </span><span class="s4">'lift'</span><span class="s3">:</span><span class="s1">lift</span><span class="s3">}</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s1">association_rule_csv</span><span class="s3">():</span>
+    <span class="s1">association_rules_df </span><span class="s3">= </span><span class="s1">pd</span><span class="s3">.</span><span class="s1">DataFrame</span><span class="s3">(</span><span class="s1">ASSOCIATION_RULES</span><span class="s3">).</span><span class="s1">transpose</span><span class="s3">()</span>
+    <span class="s1">display</span><span class="s3">(</span><span class="s1">association_rules_df</span><span class="s3">)</span>
+    <span class="s1">association_rules_df</span><span class="s3">.</span><span class="s1">to_csv</span><span class="s3">(</span><span class="s4">'ASSOCIATION_RULES.csv'</span><span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s1">create_member_list</span><span class="s3">()</span>
+<span class="s1">create_grocery_list</span><span class="s3">()</span>
+<span class="s1">create_combos</span><span class="s3">()</span>
+<span class="s1">count_combos</span><span class="s3">()</span>
+<span class="s1">create_association_rules</span><span class="s3">()</span>
+<span class="s1">association_rule_csv</span><span class="s3">()</span><hr class="ls0"><span class="s0">#%% md 
+</span><span class="s1">The most interesting associations are: People who buy milk also buy the following: mustard (72% confidence), liquor (71.9%), zwieback(71.5%), condensed milk (67.6%). It seems that there appears to be associations between other vegetables and rolls/buns and different items as well. These associations can help us create either recommendations on mobile ordering platforms, or coupons to encourage increased buying habits. <hr class="ls0"></span><span class="s0">#%% md 
+</span><span class="s1">## Conclusion 
+--- 
+Thank you so much for exploring the Apriori Algorithm with me. It's use cases are so interesting, from healthcare, to market basket analysis, to fraud detection - this is one I definitely will add to my toolbelt. (Albeit, I'll use the prebuilt algorithm next time to save myself 4 or so hours). If you found this interesting, feel free to connect with me on https://www.linkedin.com/in/pskavs1775/ or read some of my blogs found here: https://medium.com/@pskavs</span></pre>
+</body>
+</html>
